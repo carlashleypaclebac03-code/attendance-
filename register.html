@@ -1,0 +1,63 @@
+// In register.html, update the form submission
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const employeeId = document.getElementById('employeeId').value;
+    const department = document.getElementById('department').value;
+
+    if (!name || !employeeId) {
+        showMessage('Please fill all required fields', 'error');
+        return;
+    }
+
+    if (!capturedImage) {
+        showMessage('Please capture a photo first', 'error');
+        return;
+    }
+
+    // Show loading
+    registerBtn.disabled = true;
+    registerBtn.innerHTML = '<span class="spinner"></span> Registering...';
+
+    try {
+        // Use FormData for file upload
+        const formData = new FormData();
+        formData.append('action', 'register');
+        formData.append('name', name);
+        formData.append('employee_id', employeeId);
+        formData.append('department', department);
+        formData.append('image_data', capturedImage);
+
+        const response = await fetch('api.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const text = await response.text();
+        
+        try {
+            const data = JSON.parse(text);
+            
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            } else {
+                showMessage(data.message, 'error');
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = '💾 Register Employee';
+            }
+        } catch (jsonError) {
+            console.error('JSON Parse Error:', text.substring(0, 200));
+            showMessage('Server returned invalid response. Check console.', 'error');
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '💾 Register Employee';
+        }
+    } catch (error) {
+        showMessage('Registration failed: ' + error.message, 'error');
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = '💾 Register Employee';
+    }
+});
